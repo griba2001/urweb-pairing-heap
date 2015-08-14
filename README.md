@@ -1,6 +1,6 @@
 # urweb-pairing-heap
 
-minHeap and maxHeap for items and also for pairs (priority, payload)
+minHeap and maxHeap for items
 
 with functions: findTop, merge, insert, deleteTop,
 
