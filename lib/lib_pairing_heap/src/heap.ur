@@ -15,14 +15,22 @@ signature HEAP = sig
   val empty: t
   val null: t -> bool
   val size: t -> int
+  val member: eq item -> item -> t -> bool
+
+  val delete: eq item -> item -> t -> t
+  val decreaseKey: eq item -> (item -> item) -> item -> t -> t
 
   val fromList: list item -> t
   val toList: t -> list item
   val show_heap: show item -> show t
+
   (* invariants *)
 
   val propHeap: t -> bool
   val propFromToList: eq item -> list item -> bool
+  val propAllMembers: eq item -> list item -> bool
+  val propCheckAfterDeletes: eq item -> list item -> bool
+  val propDecreasedKeysAreMembers: eq item -> (item -> item) -> list item -> bool
 end
 
 
@@ -34,6 +42,9 @@ functor PairingHeap(Q: sig
 structure O = Option
 structure L = List
 structure S = String
+
+open HFunction
+open HTuple
 
 open Q
 
@@ -78,9 +89,43 @@ fun deleteTop (h1: t): t =
      None => None
      | Some (Heap (key, subs)) => mergePairs subs
 
-fun fromList (li: list item): t = L.foldl insert empty li
+fun member (_:eq item) (k1: item) (h1: t): bool =
+   case h1 of
+     None => False
+     | Some (Heap (key, subs)) =>
+         if key = k1 then True
+         else if order key k1 then L.exists (member k1) subs
+         else False
 
-(* toList: priority ordered list *)
+fun delete (_:eq item) (k1: item): t -> t =
+    let delete' >>> fst
+    where
+        fun delete' (h: t): t * bool =
+        case h of
+          None => (None, False)
+          | Some (Heap (key, subs)) =>
+                if key = k1 then (mergePairs subs, True)
+                else if order key k1 then
+                        let
+                          val (subs', deleted) = L.foldlMap deleteIfNotYet False subs
+                          val newHeap = if deleted
+                                        then Some (Heap (key, subs'))
+                                        else h
+                        in
+                           (newHeap, deleted)
+                        end
+                else (h, False)
+
+        and deleteIfNotYet (h: t) (done: bool): t * bool =
+                if done
+                then (h, done)
+                else delete' h
+    end
+
+fun decreaseKey (_:eq item) (f: item -> item) (old: item): t -> t =
+    delete old >>> insert (f old)
+
+fun fromList (li: list item): t = L.foldl insert empty li
 
 fun toList (h1: t): list item =
   let toList' [] h1
@@ -116,6 +161,29 @@ fun propFromToList (_: eq item) (li: list item): bool =
 
       toList (fromList li) = L.sort (fn x y => not <| order x y) li
 
+fun propAllMembers (_: eq item) (li: list item): bool =
+    let L.all (flip member heap) li
+    where
+      val heap = fromList li
+    end  
+
+fun propCheckAfterDeletes (_: eq item) (li: list item): bool =
+      let
+          val (itemsToDel, itemsNotToDel) = L.splitAt (L.length li / 2) li
+          val heap = L.foldl delete (fromList li) itemsToDel
+      in
+         toList heap = L.sort (fn x y => not <| order x y) itemsNotToDel
+      end
+
+fun propDecreasedKeysAreMembers  (_: eq item) (f: item -> item) (li: list item): bool =
+      let
+          val oldItems = L.take (L.length li / 2) li
+          val newItems = L.mp f oldItems
+          val heap = L.foldl (decreaseKey f) (fromList li) oldItems
+      in
+          L.all (flip member heap) (L.mp f oldItems)  
+      end
+
 end
 
 functor MkMinHeap(Q: sig
@@ -128,7 +196,6 @@ functor MkMinHeap(Q: sig
                         val order = le
                    end)
 end 
-
 
 functor MkMaxHeap(Q: sig
                 con item :: Type

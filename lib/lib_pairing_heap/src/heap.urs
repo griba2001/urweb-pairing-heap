@@ -17,6 +17,10 @@ signature HEAP = sig
   val empty: t
   val null: t -> bool
   val size: t -> int
+  val member: eq item -> item -> t -> bool
+
+  val delete: eq item -> item -> t -> t
+  val decreaseKey: eq item -> (item -> item) -> item -> t -> t
 
   val fromList: list item -> t
   val toList: t -> list item
@@ -26,7 +30,15 @@ signature HEAP = sig
 
   val propHeap: t -> bool
   val propFromToList: eq item -> list item -> bool
+  val propAllMembers: eq item -> list item -> bool
+  val propCheckAfterDeletes: eq item -> list item -> bool
+  val propDecreasedKeysAreMembers: eq item -> (item -> item) -> list item -> bool
 end
+
+functor PairingHeap(Q: sig
+                con item :: Type
+                val order: item -> item -> bool
+             end):(HEAP where con item = Q.item)
 
 functor MkMinHeap(Q: sig
                 con item :: Type
