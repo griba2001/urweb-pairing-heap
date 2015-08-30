@@ -32,7 +32,6 @@ signature HEAP = sig
   val propFromToList: eq item -> list item -> bool
   val propAllMembers: eq item -> list item -> bool
   val propCheckAfterDeletes: eq item -> list item -> bool
-  val propDecreasedKeysAreMembers: eq item -> (item -> item) -> list item -> bool
 end
 
 functor PairingHeap(Q: sig

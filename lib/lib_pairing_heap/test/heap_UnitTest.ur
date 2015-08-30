@@ -19,9 +19,8 @@ fun unitTest (testdata: list int): transaction (xbody * string * string) =
         tst1 <- U.assertBool "propFromToList fails" (H.propFromToList testdata) ;
         tst2 <- U.assertBool "propAllMembers fails" (H.propAllMembers testdata) ;
         tst3 <- U.assertBool "propCheckAfterDeletes fails" (H.propCheckAfterDeletes testdata) ;
-        tst4 <- U.assertBool "propDecreasedKeysAreMembers fails" (H.propDecreasedKeysAreMembers (flip minus 10) testdata) ;
         let
-            val testsResults = tst0 :: tst1 :: tst2 :: tst3 :: tst4 :: []
+            val testsResults = tst0 :: tst1 :: tst2 :: tst3 :: []
             val xmlJoinedResults = List.foldr join <xml/> testsResults
         in
             return (xmlJoinedResults, show myHeap, show myHeap2)

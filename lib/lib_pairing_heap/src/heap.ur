@@ -30,7 +30,6 @@ signature HEAP = sig
   val propFromToList: eq item -> list item -> bool
   val propAllMembers: eq item -> list item -> bool
   val propCheckAfterDeletes: eq item -> list item -> bool
-  val propDecreasedKeysAreMembers: eq item -> (item -> item) -> list item -> bool
 end
 
 
@@ -174,16 +173,6 @@ fun propCheckAfterDeletes (_: eq item) (li: list item): bool =
       in
          toList heap = L.sort (fn x y => not <| order x y) itemsNotToDel
       end
-
-fun propDecreasedKeysAreMembers  (_: eq item) (f: item -> item) (li: list item): bool =
-      let
-          val oldItems = L.take (L.length li / 2) li
-          val newItems = L.mp f oldItems
-          val heap = L.foldl (decreaseKey f) (fromList li) oldItems
-      in
-          L.all (flip member heap) (L.mp f oldItems)  
-      end
-
 end
 
 functor MkMinHeap(Q: sig
